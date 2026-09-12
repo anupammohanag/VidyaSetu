@@ -1,0 +1,78 @@
+Track 4: Education & EdTech - Student Retention & Welfare Efficacy Tracker
+
+This bundle contains synthetic education and welfare data designed for the TransOrg AgentIQ Datathon.
+
+Files included:
+1. track4_student_attendance.csv
+   - Daily student attendance records
+   - Messy dates, messy school IDs
+   - ANOMALIES: 100% attendance recorded on Sundays/holidays (proxy marking), present students > total students.
+
+2. track4_mid_day_meal_procurement.xlsx
+   - Grain procurement and usage logs for the Mid-Day Meal scheme
+   - Messy vendor names (need standardization to identify vendors)
+   - Mixed grain names (English/Hindi)
+   - Mixed quantity units (KG, Grams, 50kg Bags, Sacks) and embedded units ("40 kg")
+   - Messy currency formats
+
+3. track4_test_scores.json
+   - Standardized test scores (FLN - Foundational Literacy and Numeracy)
+   - Mixed grading scales (Percentage, Letter Grades, Raw Marks like "45/50", CGPA)
+   - Messy subject names
+
+4. track4_school_infrastructure.csv
+   - Periodic school infrastructure inspection data
+   - Boolean columns filled with "Yes", "Y", "1", "Hai", "Haan", "No", "N", "0", "Nahi", "Kharab"
+   - Messy dates and school IDs
+
+5. track4_school_master.csv
+   - Master data for schools, districts, blocks, and enrollment
+   - Messy districts, school types
+
+6. track4_dataset_notes.txt
+   - This file
+
+Expected join keys:
+- All tables link back to the master table via: school_id
+- Attendance + MDM: date, school_id (to check if food was procured on days with 0 attendance)
+- Infrastructure + Attendance: school_id (to check if poor amenities correlate with low attendance)
+
+Expected student tasks:
+1. Standardize school_id formats (SCH1001, SCH-1001, sch_1001, S1001, 1001).
+2. Identify and flag proxy attendance anomalies (e.g., 100% attendance on Sundays or declared holidays).
+3. Identify impossible attendance records (present_students > total_students).
+4. Standardize MDM vendor names (e.g., map "Sharma Traders", "sharma traders pvt ltd" to a single entity).
+5. Standardize grain types (e.g., "Rice", "Chawal" -> "Rice").
+6. Convert all MDM quantities to a standard unit (Kilograms). Assume 1 Bag/Sack/Bori = 50 KG. Parse embedded units.
+7. Clean MDM cost columns by removing currency symbols and commas.
+8. Standardize test scores into a single metric (e.g., Percentage). Map Letter Grades to mid-point percentages (A+=95, A=85, B=75, etc.), extract raw marks and calculate %, convert CGPA to % (CGPA * 9.5 or 10).
+9. Normalize infrastructure boolean columns (Map "Hai", "Yes", "1", "Functional" to True/1; Map "Nahi", "No", "0", "Kharab" to False/0).
+10. Build an education efficacy and student retention dashboard.
+11. Optionally build a graph-first AI agent.
+
+Expected business metrics:
+- Average Daily Attendance Rate (%)
+- Proxy Attendance Fraud Rate (%)
+- Mid-Day Meal Utilization vs Wastage
+- Infrastructure Deficit Index (% of schools missing basic amenities)
+- Average FLN (Test) Scores by District
+- Correlation: Functional Toilets vs Female Student Attendance
+- Correlation: MDM Regularity vs Attendance Rate
+
+Example dashboard questions:
+- Which districts have the highest proxy attendance anomalies?
+- Average daily attendance trend over the academic year.
+- Top 5 schools with the highest MDM grain wastage.
+- Impact of functional drinking water on overall attendance %.
+- Average test scores in Math vs Science across districts.
+- Vendor-wise MDM supply volume and cost analysis.
+
+Example agent queries:
+- Show the monthly trend of average student attendance.
+- Which district has the lowest average test scores?
+- Compare attendance rates between schools with and without functional electricity.
+- Show total MDM procurement cost by vendor.
+- Which schools reported 100% attendance on Sundays?
+- Show the distribution of grading scales used across schools.
+
+All data is synthetic and generated only for educational/datathon purposes.
