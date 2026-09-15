@@ -7,8 +7,10 @@ import json
 import os
 from dotenv import load_dotenv
 import google.generativeai as genai
+from ai_agent.agent import run_agent
 
-load_dotenv()
+_ENV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+load_dotenv(dotenv_path=_ENV_PATH)
 
 app = FastAPI(title="VidyaSetu AI API")
 
@@ -142,46 +144,10 @@ class AIQuery(BaseModel):
 
 @app.post("/api/ai/query")
 def post_ai_query(query_req: AIQuery):
-    query = query_req.query.lower()
-    conn = get_db_connection()
-    
-    if "electricity" in query and "test score" in query:
-        df_bonus = pd.read_sql_query("SELECT * FROM bonus_query_electricity_vs_scores", conn)
-        has_elec = df_bonus[df_bonus['has_electricity'] == '1']['avg_test_score'].values
-        no_elec = df_bonus[df_bonus['has_electricity'] == '0']['avg_test_score'].values
-        diff = df_bonus[df_bonus['has_electricity'] == 'Difference']['avg_test_score'].values
-        
-        has_score = round(has_elec[0], 1) if len(has_elec)>0 else 0
-        no_score = round(no_elec[0], 1) if len(no_elec)>0 else 0
-        diff_score = round(diff[0], 1) if len(diff)>0 else 0
-        
-        return {
-            "answer": f"**Functional electricity**: Average test score: {has_score}%\n\n**No functional electricity**: Average test score: {no_score}%\n\n**Difference**: {diff_score} percentage points\n\n**Interpretation**: In this dataset, schools with functional electricity had a {'higher' if diff_score > 0 else 'lower'} average test score, suggesting a potential association between infrastructure quality and learning outcomes.",
-            "chart_type": "bar",
-            "chart_data": [
-                {"name": "Functional Electricity", "Score": has_score},
-                {"name": "No Functional Electricity", "Score": no_score}
-            ]
-        }
-    
-    api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key:
-        return {"answer": "AI Agent is unavailable. Please configure GEMINI_API_KEY in the backend.", "chart_type": None, "chart_data": None}
-    
-    genai.configure(api_key=api_key)
-    
-    summary = get_dashboard_summary()
-    context = f"VidyaSetu AI Dashboard Summary Context: Total schools: {summary['total_schools']}, High risk schools: {summary['high_risk_schools']}. Average attendance: {summary['avg_attendance']}%, Proxy attendance rate: {summary['proxy_rate']}%. Average test score: {summary['avg_fln']}%."
-    
-    prompt = f"{context}\n\nUser Question: {query_req.query}\nAnswer the question based on the provided context if possible. If not enough data, say 'I don't have enough data to answer that reliably.' Keep it brief and executive-friendly."
-    
-    try:
-        model = genai.GenerativeModel('gemini-1.5-flash')
-        response = model.generate_content(prompt)
-        return {
-            "answer": response.text,
-            "chart_type": None,
-            "chart_data": None
-        }
-    except Exception as e:
-        return {"answer": f"AI error: {str(e)}", "chart_type": None, "chart_data": None}
+    """
+    VidyaSetu AI Agent endpoint.
+    Uses Gemini function-calling to intelligently route queries to the correct
+    backend analytics tools and return verified, data-backed answers.
+    Response format is preserved: answer, chart_type, chart_data.
+    """
+    return run_agent(query_req.query)
